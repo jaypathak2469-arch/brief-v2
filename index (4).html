@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRIEF — Link Management Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --warm-white: #faf8f4;
+    --ink: #1a1612;
+    --ink-soft: #3d3730;
+    --ink-muted: #9a8f83;
+    --gold: #c9a84c;
+    --gold-light: #e8d5a3;
+    --gold-pale: #f7f0de;
+    --rust: #c4603a;
+    --rust-pale: #fdf0eb;
+    --green: #4a8c5c;
+    --green-pale: #edf5f0;
+    --blue: #3a6cc4;
+    --blue-pale: #edf2fc;
+    --border: #e2d9cc;
+    --border-strong: #c8bfb4;
+    --shadow: 0 2px 20px rgba(26,22,18,.06);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--warm-white); color:var(--ink); font-family:'Geist Mono',monospace; min-height:100vh; }
+  .top-rule { height:3px; background:linear-gradient(90deg,transparent,var(--gold),var(--gold-light),var(--gold),transparent); }
+
+  /* ── PAGE SYSTEM ── */
+  .page { display:none; }
+  .page.active { display:block; }
+  .page.flex-center { display:none; min-height:100vh; align-items:center; justify-content:center; }
+  .page.flex-center.active { display:flex; }
+
+  /* ── AUTH ── */
+  .auth-wrap { width:100%; max-width:440px; padding:24px; }
+  .auth-box { background:white; border:1px solid var(--border); border-radius:8px; padding:48px 40px; box-shadow:var(--shadow); }
+  .auth-logo { font-family:'Cormorant Garamond',serif; font-size:3.2rem; font-weight:300; text-align:center; line-height:1; margin-bottom:4px; }
+  .auth-logo em { font-style:italic; color:var(--gold); }
+  .auth-sub { font-family:'Cormorant Garamond',serif; font-size:.95rem; font-style:italic; color:var(--ink-muted); text-align:center; margin-bottom:32px; }
+  .auth-tabs { display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-bottom:28px; }
+  .auth-tab { flex:1; padding:10px; font-family:'Geist Mono',monospace; font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; background:transparent; border:none; cursor:pointer; color:var(--ink-muted); transition:all .2s; }
+  .auth-tab.active { background:var(--ink); color:var(--cream); }
+  .fgroup { margin-bottom:18px; }
+  .flabel { font-size:.57rem; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-muted); margin-bottom:7px; display:block; }
+  .finput { width:100%; border:1px solid var(--border-strong); border-radius:4px; padding:11px 14px; font-family:'Geist Mono',monospace; font-size:.78rem; color:var(--ink); background:var(--warm-white); outline:none; transition:border-color .2s,box-shadow .2s; }
+  .finput:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,.1); }
+  .finput::placeholder { color:var(--ink-muted); font-style:italic; }
+  .role-select { display:flex; gap:10px; margin-bottom:18px; }
+  .role-opt { flex:1; border:1px solid var(--border); border-radius:4px; padding:10px; cursor:pointer; text-align:center; transition:all .2s; }
+  .role-opt input { display:none; }
+  .role-opt .role-icon { font-size:1.2rem; display:block; margin-bottom:4px; }
+  .role-opt .role-name { font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-muted); }
+  .role-opt.selected { border-color:var(--gold); background:var(--gold-pale); }
+  .role-opt.selected .role-name { color:var(--ink); }
+  .abtn { width:100%; background:var(--ink); color:var(--cream); border:none; border-radius:4px; padding:13px; font-family:'Cormorant Garamond',serif; font-size:1rem; letter-spacing:.06em; cursor:pointer; position:relative; overflow:hidden; transition:color .25s; margin-top:4px; }
+  .abtn::before { content:''; position:absolute; inset:0; background:var(--gold); transform:translateX(-101%); transition:transform .3s cubic-bezier(.4,0,.2,1); }
+  .abtn:hover::before { transform:translateX(0); }
+  .abtn:hover { color:var(--ink); }
+  .abtn span { position:relative; z-index:1; }
+  .aerr { background:var(--rust-pale); border:1px solid #f0c5b5; border-radius:4px; padding:10px 14px; font-size:.7rem; color:var(--rust); margin-bottom:16px; display:none; }
+  .asucc { background:var(--green-pale); border:1px solid #b8ddc6; border-radius:4px; padding:10px 14px; font-size:.7rem; color:var(--green); margin-bottom:16px; display:none; }
+
+  /* ── NAVBAR ── */
+  .navbar { border-bottom:1px solid var(--border); padding:0 36px; display:flex; align-items:center; justify-content:space-between; height:58px; background:rgba(250,248,244,.96); backdrop-filter:blur(10px); position:sticky; top:0; z-index:100; }
+  .nav-logo { font-family:'Cormorant Garamond',serif; font-size:1.7rem; font-weight:300; line-height:1; }
+  .nav-logo em { font-style:italic; color:var(--gold); }
+  .nav-center { display:flex; gap:4px; }
+  .nav-tab { background:transparent; border:none; padding:6px 14px; font-family:'Geist Mono',monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-muted); cursor:pointer; border-radius:4px; transition:all .2s; }
+  .nav-tab:hover { background:var(--cream); color:var(--ink); }
+  .nav-tab.active { background:var(--ink); color:var(--cream); }
+  .nav-right { display:flex; align-items:center; gap:14px; }
+  .nav-badge { font-size:.58rem; letter-spacing:.1em; text-transform:uppercase; padding:3px 10px; border-radius:20px; font-weight:500; }
+  .nav-badge.admin { background:var(--gold-pale); color:#8a6820; border:1px solid var(--gold-light); }
+  .nav-badge.user { background:var(--blue-pale); color:var(--blue); border:1px solid #c5d8f5; }
+  .nav-user { font-size:.65rem; color:var(--ink-muted); letter-spacing:.06em; }
+  .nav-logout { background:transparent; border:1px solid var(--border-strong); border-radius:3px; padding:5px 12px; font-family:'Geist Mono',monospace; font-size:.6rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); cursor:pointer; transition:all .2s; }
+  .nav-logout:hover { border-color:var(--rust); color:var(--rust); }
+
+  /* ── CONTAINER ── */
+  .container { max-width:1020px; margin:0 auto; padding:40px 28px 100px; }
+
+  /* ── SECTION HEADER ── */
+  .sec-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .sec-title { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:300; display:flex; align-items:baseline; gap:10px; }
+  .sec-count { font-family:'Geist Mono',monospace; font-size:.6rem; color:var(--ink-muted); font-weight:300; }
+
+  /* ── CARDS ── */
+  .card { background:white; border:1px solid var(--border); border-radius:8px; padding:32px; margin-bottom:32px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+  .card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+  .card-title { font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-weight:400; margin-bottom:22px; padding-bottom:14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+  .card-title .ct-badge { font-family:'Geist Mono',monospace; font-size:.55rem; letter-spacing:.12em; text-transform:uppercase; padding:3px 8px; border-radius:3px; margin-left:4px; }
+  .ct-badge.admin-only { background:var(--gold-pale); color:#8a6820; border:1px solid var(--gold-light); }
+  .ct-badge.rule { background:var(--blue-pale); color:var(--blue); border:1px solid #c5d8f5; }
+
+  /* ── FORM ── */
+  .frow { display:grid; gap:14px; margin-bottom:14px; }
+  .frow.cols2 { grid-template-columns:1fr 1fr; }
+  .frow.cols3 { grid-template-columns:1fr 1fr 1fr; }
+  .frow.cols4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+  .fwrap { display:flex; flex-direction:column; gap:7px; }
+  .ferr { font-size:.66rem; color:var(--rust); display:none; }
+
+  /* ── RULE TOGGLES ── */
+  .rule-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+  .rule-item { border:1px solid var(--border); border-radius:6px; padding:14px 16px; display:flex; align-items:flex-start; gap:12px; transition:border-color .2s,background .2s; }
+  .rule-item:has(.rule-toggle:checked) { border-color:var(--gold); background:var(--gold-pale); }
+  .rule-toggle { appearance:none; width:36px; height:20px; background:var(--border-strong); border-radius:20px; cursor:pointer; position:relative; flex-shrink:0; transition:background .25s; margin-top:2px; }
+  .rule-toggle::after { content:''; position:absolute; width:14px; height:14px; background:white; border-radius:50%; top:3px; left:3px; transition:transform .25s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+  .rule-toggle:checked { background:var(--gold); }
+  .rule-toggle:checked::after { transform:translateX(16px); }
+  .rule-info { flex:1; }
+  .rule-name { font-size:.72rem; font-weight:500; color:var(--ink); margin-bottom:3px; }
+  .rule-desc { font-size:.62rem; color:var(--ink-muted); line-height:1.5; }
+
+  /* ── BUTTONS ── */
+  .btn { border:none; border-radius:4px; cursor:pointer; font-family:'Cormorant Garamond',serif; letter-spacing:.06em; position:relative; overflow:hidden; transition:color .25s; }
+  .btn::before { content:''; position:absolute; inset:0; background:var(--gold); transform:translateX(-101%); transition:transform .3s cubic-bezier(.4,0,.2,1); }
+  .btn:hover::before { transform:translateX(0); }
+  .btn:hover { color:var(--ink); }
+  .btn span { position:relative; z-index:1; }
+  .btn-primary { background:var(--ink); color:var(--cream); padding:11px 28px; font-size:.95rem; }
+  .btn-sm { background:var(--ink); color:var(--cream); padding:8px 16px; font-size:.82rem; }
+  .btn-ghost { background:transparent; border:1px solid var(--border-strong); color:var(--ink-soft); padding:8px 14px; font-size:.82rem; font-family:'Geist Mono',monospace; letter-spacing:.06em; }
+  .btn-ghost::before { background:var(--cream); }
+  .btn-ghost:hover { color:var(--ink); }
+  .btn-danger { background:transparent; border:1px solid var(--border); color:var(--ink-muted); padding:5px 9px; font-size:.7rem; font-family:'Geist Mono',monospace; border-radius:3px; cursor:pointer; transition:all .2s; }
+  .btn-danger:hover { border-color:var(--rust); color:var(--rust); background:var(--rust-pale); }
+  .btn-edit { background:transparent; border:1px solid var(--border); color:var(--ink-muted); padding:5px 9px; font-size:.7rem; font-family:'Geist Mono',monospace; border-radius:3px; cursor:pointer; transition:all .2s; }
+  .btn-edit:hover { border-color:var(--gold); color:var(--ink); background:var(--gold-pale); }
+
+  /* ── RESULT BOX ── */
+  .result-box { margin-top:16px; display:none; align-items:center; justify-content:space-between; background:var(--gold-pale); border:1px solid var(--gold-light); border-radius:4px; padding:13px 18px; gap:12px; animation:fadeUp .3s ease; }
+  .result-inner { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+  .result-dot { width:6px; height:6px; background:var(--gold); border-radius:50%; flex-shrink:0; }
+  .result-link { color:var(--ink); font-size:.76rem; text-decoration:none; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .copy-btn { background:transparent; border:1px solid var(--border-strong); border-radius:3px; padding:5px 12px; color:var(--ink-soft); font-family:'Geist Mono',monospace; font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; transition:all .18s; flex-shrink:0; }
+  .copy-btn:hover { background:var(--ink); color:var(--cream); border-color:var(--ink); }
+  .copy-btn.copied { background:var(--gold); color:var(--ink); border-color:var(--gold); }
+
+  /* ── TABLE ── */
+  .tbl-wrap { border:1px solid var(--border); border-radius:8px; overflow:hidden; background:white; box-shadow:var(--shadow); overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:680px; }
+  thead { background:var(--cream); border-bottom:1px solid var(--border); }
+  th { padding:11px 14px; text-align:left; font-size:.53rem; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-muted); font-weight:400; white-space:nowrap; }
+  td { padding:13px 14px; font-size:.71rem; border-bottom:1px solid var(--border); color:var(--ink-soft); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tbody tr { transition:background .15s; }
+  tbody tr:hover { background:var(--cream); }
+  tbody tr.row-disabled { opacity:.5; }
+  tbody tr.row-expired { opacity:.6; }
+  .tc-url { max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink-muted); font-size:.66rem; }
+  .tc-short a { color:var(--ink); text-decoration:none; font-weight:500; border-bottom:1px solid var(--gold-light); transition:border-color .2s; }
+  .tc-short a:hover { border-bottom-color:var(--gold); }
+  .tc-date { color:var(--ink-muted); font-size:.62rem; white-space:nowrap; }
+  .tc-actions { display:flex; gap:6px; align-items:center; flex-wrap:nowrap; }
+
+  /* ── PILLS & BADGES ── */
+  .pill { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:.64rem; font-weight:500; white-space:nowrap; }
+  .pill-clicks { background:var(--cream); border:1px solid var(--border); color:var(--ink); }
+  .pill-warn { background:#fff8e6; border:1px solid #f0d88a; color:#8a6820; }
+  .pill-expired { background:var(--rust-pale); border:1px solid #f0c5b5; color:var(--rust); }
+  .pill-active { background:var(--green-pale); border:1px solid #b8ddc6; color:var(--green); }
+  .pill-inactive { background:var(--rust-pale); border:1px solid #f0c5b5; color:var(--rust); }
+  .pip { width:5px; height:5px; border-radius:50%; background:currentColor; opacity:.6; }
+
+  /* Status toggle button */
+  .status-btn { display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:20px; font-size:.6rem; font-weight:500; letter-spacing:.04em; text-transform:uppercase; cursor:pointer; border:none; transition:all .2s; }
+  .status-btn.active { background:var(--green-pale); color:var(--green); border:1px solid #b8ddc6; }
+  .status-btn.inactive { background:var(--rust-pale); color:var(--rust); border:1px solid #f0c5b5; }
+  .status-btn:hover { opacity:.75; }
+
+  /* ── RULES ENFORCEMENT BANNER ── */
+  .rules-active-bar { background:var(--blue-pale); border:1px solid #c5d8f5; border-radius:6px; padding:12px 18px; margin-bottom:24px; display:none; align-items:center; gap:10px; font-size:.7rem; color:var(--blue); }
+  .rules-active-bar.show { display:flex; }
+  .rab-icon { font-size:1rem; flex-shrink:0; }
+  .rab-rules { display:flex; gap:8px; flex-wrap:wrap; margin-left:4px; }
+  .rab-tag { background:white; border:1px solid #c5d8f5; border-radius:3px; padding:2px 8px; font-size:.6rem; letter-spacing:.06em; }
+
+  /* ── ADMIN PANEL ── */
+  .admin-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+  .stat-card { background:white; border:1px solid var(--border); border-radius:6px; padding:20px; box-shadow:var(--shadow); }
+  .stat-val { font-family:'Cormorant Garamond',serif; font-size:2.2rem; font-weight:300; line-height:1; color:var(--ink); margin-bottom:4px; }
+  .stat-val em { font-style:italic; color:var(--gold); }
+  .stat-label { font-size:.58rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-muted); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { padding:60px 20px; text-align:center; }
+  .empty-glyph { font-family:'Cormorant Garamond',serif; font-size:3rem; font-weight:300; font-style:italic; color:var(--border); margin-bottom:12px; }
+  .empty-text { font-family:'Cormorant Garamond',serif; font-size:1rem; font-style:italic; color:var(--ink-muted); line-height:1.9; }
+
+  /* ── MODAL ── */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(26,22,18,.5); z-index:200; align-items:center; justify-content:center; padding:24px; backdrop-filter:blur(4px); }
+  .modal-overlay.open { display:flex; }
+  .modal { background:white; border:1px solid var(--border); border-radius:8px; padding:36px; width:100%; max-width:460px; box-shadow:0 8px 48px rgba(26,22,18,.15); animation:fadeUp .25s ease; }
+  .modal-title { font-family:'Cormorant Garamond',serif; font-size:1.25rem; font-weight:400; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+  .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+  .modal-cancel { background:transparent; border:1px solid var(--border-strong); border-radius:4px; padding:9px 18px; font-family:'Geist Mono',monospace; font-size:.68rem; color:var(--ink-muted); cursor:pointer; transition:all .18s; }
+  .modal-cancel:hover { border-color:var(--rust); color:var(--rust); }
+  .modal-save { background:var(--ink); color:var(--cream); border:none; border-radius:4px; padding:9px 22px; font-family:'Cormorant Garamond',serif; font-size:.92rem; cursor:pointer; transition:background .2s,color .2s; }
+  .modal-save:hover { background:var(--gold); color:var(--ink); }
+
+  /* ── REDIRECT ── */
+  .redir-page { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; text-align:center; gap:20px; padding:40px; }
+  .redir-page.active { display:flex; }
+  .redir-logo { font-family:'Cormorant Garamond',serif; font-size:3.5rem; font-weight:300; }
+  .redir-logo em { font-style:italic; color:var(--gold); }
+  .redir-spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin .9s linear infinite; }
+  .redir-label { font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-style:italic; font-weight:300; color:var(--ink-muted); }
+  .redir-url { font-size:.68rem; color:var(--gold); max-width:400px; word-break:break-all; }
+  .redir-warning { background:#fff8e6; border:1px solid #f0d88a; border-radius:6px; padding:16px 20px; max-width:420px; font-size:.75rem; color:#8a6820; line-height:1.7; }
+  .redir-block { background:var(--rust-pale); border:1px solid #f0c5b5; border-radius:6px; padding:20px 24px; max-width:420px; text-align:left; }
+  .redir-block-title { font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:var(--rust); margin-bottom:8px; }
+  .redir-block-msg { font-size:.75rem; color:var(--ink-muted); line-height:1.7; }
+
+  /* ── FOOTER ── */
+  .footer-rule { margin-top:56px; display:flex; align-items:center; gap:16px; color:var(--ink-muted); font-size:.56rem; letter-spacing:.18em; text-transform:uppercase; }
+  .footer-rule::before,.footer-rule::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  @media(max-width:700px){
+    .frow.cols2,.frow.cols3,.frow.cols4{grid-template-columns:1fr;}
+    .admin-stats{grid-template-columns:1fr 1fr;}
+    .rule-grid{grid-template-columns:1fr;}
+    .navbar{padding:0 16px;}
+    .container{padding:28px 14px 80px;}
+    .card{padding:22px 16px;}
+    .auth-box{padding:36px 24px;}
+    .nav-center{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="top-rule"></div>
+
+<!-- ══════════════════════════════════════════════
+     REDIRECT PAGE
+══════════════════════════════════════════════ -->
+<div class="redir-page" id="redirPage">
+  <div class="redir-logo">Bri<em>ef</em></div>
+  <div id="redirSpinner" class="redir-spinner"></div>
+  <div id="redirLabel" class="redir-label">Taking you there…</div>
+  <div id="redirUrl" class="redir-url"></div>
+  <div id="redirWarning" class="redir-warning" style="display:none"></div>
+  <div id="redirBlock" class="redir-block" style="display:none">
+    <div class="redir-block-title">Access Denied</div>
+    <div class="redir-block-msg" id="redirBlockMsg"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     LOGIN PAGE
+══════════════════════════════════════════════ -->
+<div class="page flex-center active" id="loginPage">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">Bri<em>ef</em></div>
+      <div class="auth-sub">Link Management Platform</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login',this)">Sign in</button>
+        <button class="auth-tab" onclick="switchAuthTab('register',this)">Register</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <div class="aerr" id="loginErr"></div>
+        <div class="fgroup">
+          <label class="flabel">Username</label>
+          <input class="finput" id="lu" type="text" placeholder="your username" autocomplete="off" />
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Password</label>
+          <input class="finput" id="lp" type="password" placeholder="••••••••" />
+        </div>
+        <button class="abtn" onclick="doLogin()"><span>Sign in →</span></button>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" style="display:none">
+        <div class="aerr" id="regErr"></div>
+        <div class="asucc" id="regSucc"></div>
+        <div class="fgroup">
+          <label class="flabel">Username</label>
+          <input class="finput" id="ru" type="text" placeholder="choose a username" autocomplete="off" />
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Password</label>
+          <input class="finput" id="rp" type="password" placeholder="min 6 characters" />
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Confirm Password</label>
+          <input class="finput" id="rp2" type="password" placeholder="repeat password" />
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Account type</label>
+          <div class="role-select">
+            <label class="role-opt selected" id="roleUserOpt">
+              <input type="radio" name="role" value="user" checked onchange="selectRole('user')" />
+              <span class="role-icon">👤</span>
+              <span class="role-name">User</span>
+            </label>
+            <label class="role-opt" id="roleAdminOpt">
+              <input type="radio" name="role" value="admin" onchange="selectRole('admin')" />
+              <span class="role-icon">🔑</span>
+              <span class="role-name">Admin</span>
+            </label>
+          </div>
+        </div>
+        <div class="fgroup" id="adminCodeGroup" style="display:none">
+          <label class="flabel">Admin access code</label>
+          <input class="finput" id="adminCode" type="password" placeholder="enter admin code" />
+        </div>
+        <button class="abtn" onclick="doRegister()"><span>Create account →</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════════ -->
+<div class="page" id="appPage">
+  <nav class="navbar">
+    <div class="nav-logo">Bri<em>ef</em></div>
+    <div class="nav-center">
+      <button class="nav-tab active" id="navLinks" onclick="switchTab('links')">My Links</button>
+      <button class="nav-tab" id="navAdmin" onclick="switchTab('admin')" style="display:none">Admin Panel</button>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge" id="roleBadge">user</span>
+      <span class="nav-user" id="navUser"></span>
+      <button class="nav-logout" onclick="doLogout()">Sign out</button>
+    </div>
+  </nav>
+
+  <!-- LINKS TAB -->
+  <div class="container" id="tabLinks">
+
+    <!-- Rules Active Bar -->
+    <div class="rules-active-bar" id="rulesBar">
+      <span class="rab-icon">🔒</span>
+      <span>Active rules applied to your links:</span>
+      <div class="rab-rules" id="rulesBarTags"></div>
+    </div>
+
+    <!-- Create Card -->
+    <div class="card">
+      <div class="card-title">New shortened link</div>
+      <div class="frow">
+        <div class="fwrap" style="grid-column:1/-1">
+          <label class="flabel">Destination URL *</label>
+          <input class="finput" id="newUrl" type="text" placeholder="https://your-long-url.com/goes/here" autocomplete="off" spellcheck="false" />
+          <div class="ferr" id="urlErr">↳ Please enter a valid URL (must begin with https://)</div>
+        </div>
+      </div>
+      <div class="frow cols3">
+        <div class="fwrap">
+          <label class="flabel">Custom alias (optional)</label>
+          <input class="finput" id="newAlias" type="text" placeholder="my-link" autocomplete="off" />
+          <div class="ferr" id="aliasErr">↳ Alias already in use</div>
+        </div>
+        <div class="fwrap">
+          <label class="flabel">Click limit (optional)</label>
+          <input class="finput" id="newLimit" type="number" placeholder="e.g. 10" min="1" />
+          <div class="ferr" id="limitErr" style="display:block;color:var(--ink-muted);font-size:.62rem;"></div>
+        </div>
+        <div class="fwrap">
+          <label class="flabel">Expires after (days, optional)</label>
+          <input class="finput" id="newExpiry" type="number" placeholder="e.g. 7" min="1" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="createLink()"><span>Shorten →</span></button>
+      <div class="result-box" id="resultBox">
+        <div class="result-inner">
+          <div class="result-dot"></div>
+          <a class="result-link" id="resultLink" href="#" onclick="return false;"></a>
+        </div>
+        <button class="copy-btn" id="copyBtn" onclick="copyLink()">Copy</button>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="sec-head">
+      <div class="sec-title">Your links <span class="sec-count" id="linkCount">— 0 entries</span></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Original URL</th>
+            <th>Short link</th>
+            <th>Clicks</th>
+            <th>Status</th>
+            <th>Limit / Expiry</th>
+            <th>Created</th>
+            <th>Last accessed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-glyph">∅</div>
+        <div class="empty-text">No links yet.<br>Create your first link above.</div>
+      </div>
+    </div>
+    <div class="footer-rule">Brief · Link Management Platform</div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div class="container" id="tabAdmin" style="display:none">
+
+    <!-- Stats -->
+    <div class="admin-stats">
+      <div class="stat-card">
+        <div class="stat-val" id="statUsers">0</div>
+        <div class="stat-label">Total users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statLinks">0</div>
+        <div class="stat-label">Total links</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statClicks">0</div>
+        <div class="stat-label">Total clicks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statActive">0</div>
+        <div class="stat-label">Active links</div>
+      </div>
+    </div>
+
+    <!-- Global Rules -->
+    <div class="card">
+      <div class="card-title">
+        Global Link Rules
+        <span class="ct-badge rule">Admin only</span>
+      </div>
+      <p style="font-size:.72rem;color:var(--ink-muted);margin-bottom:20px;line-height:1.7;">These rules apply platform-wide to all users. Toggle rules on/off and set thresholds. Rules are enforced at redirect time.</p>
+      <div class="rule-grid">
+        <div class="rule-item">
+          <input type="checkbox" class="rule-toggle" id="ruleMaxClicks" onchange="saveRules()" />
+          <div class="rule-info">
+            <div class="rule-name">Max click limit enforcement</div>
+            <div class="rule-desc">Force all links to expire after a platform-wide maximum number of clicks.</div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+              <label class="flabel" style="margin:0">Max clicks:</label>
+              <input class="finput" id="ruleMaxClicksVal" type="number" min="1" placeholder="100" style="width:90px;padding:6px 10px;" onchange="saveRules()" />
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <input type="checkbox" class="rule-toggle" id="ruleMaxExpiry" onchange="saveRules()" />
+          <div class="rule-info">
+            <div class="rule-name">Max link lifetime</div>
+            <div class="rule-desc">Force all links to expire after a set number of days from creation.</div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+              <label class="flabel" style="margin:0">Max days:</label>
+              <input class="finput" id="ruleMaxExpiryVal" type="number" min="1" placeholder="30" style="width:90px;padding:6px 10px;" onchange="saveRules()" />
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <input type="checkbox" class="rule-toggle" id="ruleWarnClicks" onchange="saveRules()" />
+          <div class="rule-info">
+            <div class="rule-name">Click limit warning</div>
+            <div class="rule-desc">Show a warning page to users when a link is within 20% of its click limit, before redirecting.</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <input type="checkbox" class="rule-toggle" id="ruleRequireHttps" onchange="saveRules()" />
+          <div class="rule-info">
+            <div class="rule-name">Require HTTPS destinations</div>
+            <div class="rule-desc">Block creation of links that point to non-HTTPS destinations.</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <input type="checkbox" class="rule-toggle" id="ruleDisableNew" onchange="saveRules()" />
+          <div class="rule-info">
+            <div class="rule-name">Freeze new link creation</div>
+            <div class="rule-desc">Temporarily prevent all users from creating new shortened links.</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <input type="checkbox" class="rule-toggle" id="ruleAutoDisable" onchange="saveRules()" />
+          <div class="rule-info">
+            <div class="rule-name">Auto-disable expired links</div>
+            <div class="rule-desc">Automatically mark links as inactive once they reach their click limit or expiry date.</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveRules(true)"><span>Save rules →</span></button>
+      <span id="rulesSaved" style="font-size:.68rem;color:var(--green);margin-left:12px;display:none;">✓ Rules saved</span>
+    </div>
+
+    <!-- All Users & Links -->
+    <div class="sec-head">
+      <div class="sec-title">All users <span class="sec-count" id="adminUserCount"></span></div>
+    </div>
+    <div class="tbl-wrap" style="margin-bottom:32px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Links</th>
+            <th>Total clicks</th>
+            <th>Registered</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminUserTable"></tbody>
+      </table>
+      <div class="empty-state" id="adminUserEmpty" style="display:none">
+        <div class="empty-text">No users yet.</div>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <div class="sec-title">All links <span class="sec-count" id="adminLinkCount"></span></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Owner</th>
+            <th>Original URL</th>
+            <th>Short link</th>
+            <th>Clicks</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminLinkTable"></tbody>
+      </table>
+      <div class="empty-state" id="adminLinkEmpty" style="display:none">
+        <div class="empty-text">No links yet.</div>
+      </div>
+    </div>
+    <div class="footer-rule">Brief · Admin Panel</div>
+  </div>
+</div>
+
+<!-- Edit URL Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">Edit destination URL</div>
+    <div class="fwrap" style="margin-bottom:8px;">
+      <label class="flabel">New destination URL</label>
+      <input class="finput" id="editUrl" type="text" placeholder="https://new-destination.com" />
+      <div class="ferr" id="editErr">↳ Enter a valid URL</div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeModal('editModal')">Cancel</button>
+      <button class="modal-save" onclick="saveEdit()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════
+const SK = {
+  users:    'brief_users_v3',
+  session:  'brief_session_v3',
+  rules:    'brief_rules_v3',
+  links:    u => `brief_links_v3_${u}`,
+};
+
+const db = {
+  users:    () => { try { return JSON.parse(localStorage.getItem(SK.users)) || {}; } catch { return {}; } },
+  saveUsers: d => localStorage.setItem(SK.users, JSON.stringify(d)),
+  links:    u => { try { return JSON.parse(localStorage.getItem(SK.links(u))) || []; } catch { return []; } },
+  saveLinks: (u,d) => localStorage.setItem(SK.links(u), JSON.stringify(d)),
+  session:  () => localStorage.getItem(SK.session),
+  setSession: u => localStorage.setItem(SK.session, u),
+  clearSession: () => localStorage.removeItem(SK.session),
+  rules:    () => { try { return JSON.parse(localStorage.getItem(SK.rules)) || {}; } catch { return {}; } },
+  saveRulesRaw: d => localStorage.setItem(SK.rules, JSON.stringify(d)),
+};
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+const ADMIN_CODE = 'BRIEF2024'; // Admin registration code
+
+const genCode = () => {
+  const c = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let s = ''; for (let i=0;i<6;i++) s+=c[Math.floor(Math.random()*c.length)]; return s;
+};
+
+const buildShort = code => `${location.origin}${location.pathname}?s=${code}`;
+
+const isValidUrl = s => {
+  try { const u = new URL(s); return u.protocol==='http:'||u.protocol==='https:'; }
+  catch { return false; }
+};
+
+const isHttps = s => { try { return new URL(s).protocol==='https:'; } catch { return false; } };
+
+const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
+const fmtDT   = iso => iso ? new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Never';
+const trunc   = (s,n) => s&&s.length>n ? s.slice(0,n)+'…' : (s||'');
+
+function isLinkExpiredByDate(link) {
+  if (!link.expiryDays) return false;
+  const created = new Date(link.created).getTime();
+  const expMs   = link.expiryDays * 24 * 60 * 60 * 1000;
+  return Date.now() > created + expMs;
+}
+
+function isLinkExpiredByClicks(link) {
+  const rules = db.rules();
+  // Per-link limit
+  if (link.limit && link.clicks >= link.limit) return true;
+  // Global max clicks rule
+  if (rules.maxClicks && rules.maxClicksVal && link.clicks >= parseInt(rules.maxClicksVal)) return true;
+  return false;
+}
+
+function isLinkExpiredByGlobalDate(link) {
+  const rules = db.rules();
+  if (!rules.maxExpiry || !rules.maxExpiryVal) return false;
+  const created = new Date(link.created).getTime();
+  const expMs = parseInt(rules.maxExpiryVal) * 24 * 60 * 60 * 1000;
+  return Date.now() > created + expMs;
+}
+
+function getLinkStatus(link) {
+  if (!link.enabled) return 'inactive';
+  if (isLinkExpiredByClicks(link) || isLinkExpiredByDate(link) || isLinkExpiredByGlobalDate(link)) return 'expired';
+  return 'active';
+}
+
+// ══════════════════════════════════════════
+// REDIRECT CHECK — runs immediately
+// ══════════════════════════════════════════
+(function checkRedirect() {
+  const code = new URLSearchParams(location.search).get('s');
+  if (!code) return;
+
+  // Show redirect page
+  document.getElementById('loginPage').classList.remove('active');
+  document.getElementById('redirPage').classList.add('active');
+
+  const users = db.users();
+  let found = null, foundUser = null;
+
+  for (const u of Object.keys(users)) {
+    const lx = db.links(u);
+    const e  = lx.find(l => l.code === code);
+    if (e) { found = e; foundUser = u; break; }
+  }
+
+  const spinner  = document.getElementById('redirSpinner');
+  const label    = document.getElementById('redirLabel');
+  const urlEl    = document.getElementById('redirUrl');
+  const warnEl   = document.getElementById('redirWarning');
+  const blockEl  = document.getElementById('redirBlock');
+  const blockMsg = document.getElementById('redirBlockMsg');
+
+  function block(msg) {
+    spinner.style.display = 'none';
+    label.style.display   = 'none';
+    blockEl.style.display = 'block';
+    blockMsg.textContent  = msg;
+  }
+
+  if (!found) { block('This link does not exist or has been removed.'); return; }
+
+  const rules = db.rules();
+
+  // Rule: disabled
+  if (!found.enabled) {
+    block('This link has been disabled by its owner and is currently inactive.');
+    return;
+  }
+
+  // Rule: click-based expiry
+  if (isLinkExpiredByClicks(found)) {
+    const reason = found.limit && found.clicks >= found.limit
+      ? `This link was limited to ${found.limit} click${found.limit!==1?'s':''} and has been fully used.`
+      : `This link has reached the platform's maximum click limit and is no longer active.`;
+    block(reason);
+    // Auto-disable if rule set
+    if (rules.autoDisable) {
+      found.enabled = false;
+      const lx = db.links(foundUser);
+      const idx = lx.findIndex(l => l.code === code);
+      if (idx !== -1) { lx[idx] = found; db.saveLinks(foundUser, lx); }
+    }
+    return;
+  }
+
+  // Rule: date expiry (per-link)
+  if (isLinkExpiredByDate(found)) {
+    block(`This link was set to expire after ${found.expiryDays} day${found.expiryDays!==1?'s':''} and is no longer active.`);
+    return;
+  }
+
+  // Rule: global date expiry
+  if (isLinkExpiredByGlobalDate(found)) {
+    block(`This link has exceeded the platform's maximum lifetime and is no longer active.`);
+    return;
+  }
+
+  // Rule: warn when approaching click limit
+  const warnEnabled = rules.warnClicks;
+  const limit = found.limit || (rules.maxClicks ? parseInt(rules.maxClicksVal) : null);
+  let showWarning = false;
+  if (warnEnabled && limit) {
+    const remaining = limit - found.clicks;
+    if (remaining <= Math.ceil(limit * 0.2) && remaining > 0) {
+      showWarning = true;
+      warnEl.style.display = 'block';
+      warnEl.textContent = `⚠ This link is approaching its usage limit. ${remaining} click${remaining!==1?'s':''} remaining before it expires.`;
+    }
+  }
+
+  // All good — track click
+  found.clicks++;
+  found.lastAccessed = new Date().toISOString();
+  const lx = db.links(foundUser);
+  const idx = lx.findIndex(l => l.code === code);
+  if (idx !== -1) { lx[idx] = found; db.saveLinks(foundUser, lx); }
+
+  urlEl.textContent = found.original;
+
+  const delay = showWarning ? 3500 : 950;
+  if (showWarning) {
+    label.textContent = 'You will be redirected shortly…';
+  }
+
+  setTimeout(() => { window.location.href = found.original; }, delay);
+})();
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+let selectedRole = 'user';
+
+function selectRole(r) {
+  selectedRole = r;
+  document.getElementById('roleUserOpt').classList.toggle('selected', r==='user');
+  document.getElementById('roleAdminOpt').classList.toggle('selected', r==='admin');
+  document.getElementById('adminCodeGroup').style.display = r==='admin' ? 'block' : 'none';
+}
+
+function switchAuthTab(tab, btn) {
+  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('loginForm').style.display    = tab==='login'    ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab==='register' ? 'block' : 'none';
+}
+
+function doLogin() {
+  const u   = document.getElementById('lu').value.trim();
+  const p   = document.getElementById('lp').value;
+  const err = document.getElementById('loginErr');
+  err.style.display = 'none';
+
+  if (!u||!p) { err.textContent='Please fill in all fields.'; err.style.display='block'; return; }
+  const users = db.users();
+  if (!users[u] || users[u].password !== btoa(p)) {
+    err.textContent='Invalid username or password.'; err.style.display='block'; return;
+  }
+  db.setSession(u);
+  initApp(u);
+}
+
+function doRegister() {
+  const u    = document.getElementById('ru').value.trim();
+  const p    = document.getElementById('rp').value;
+  const p2   = document.getElementById('rp2').value;
+  const code = document.getElementById('adminCode').value;
+  const err  = document.getElementById('regErr');
+  const succ = document.getElementById('regSucc');
+  err.style.display='none'; succ.style.display='none';
+
+  if (!u||!p||!p2) { err.textContent='Please fill in all fields.'; err.style.display='block'; return; }
+  if (p.length<6)  { err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
+  if (p!==p2)      { err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+  if (!/^[a-zA-Z0-9_-]{3,20}$/.test(u)) { err.textContent='Username: 3–20 chars, letters/numbers/_/- only.'; err.style.display='block'; return; }
+
+  if (selectedRole==='admin' && code!==ADMIN_CODE) {
+    err.textContent='Invalid admin access code.'; err.style.display='block'; return;
+  }
+
+  const users = db.users();
+  if (users[u]) { err.textContent='Username already taken.'; err.style.display='block'; return; }
+
+  users[u] = { password: btoa(p), role: selectedRole, created: new Date().toISOString() };
+  db.saveUsers(users);
+  db.setSession(u);
+  initApp(u);
+}
+
+function doLogout() {
+  currentUser = null;
+  currentRole = 'user';
+  db.clearSession();
+  showLoginPage();
+}
+
+function showLoginPage() {
+  // Hide all pages
+  document.getElementById('appPage').classList.remove('active');
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('redirPage').classList.remove('active');
+  document.getElementById('redirPage').style.display = 'none';
+
+  // Reset login form
+  document.getElementById('lu').value = '';
+  document.getElementById('lp').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+  document.getElementById('regErr').style.display = 'none';
+
+  // Switch to login tab
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('registerForm').style.display = 'none';
+  document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', i===0));
+
+  // Show login page
+  document.getElementById('loginPage').classList.add('active');
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════
+// APP INIT
+// ══════════════════════════════════════════
+let currentUser = null;
+let currentRole = 'user';
+let currentTab  = 'links';
+
+function initApp(u) {
+  currentUser = u;
+  const users = db.users();
+  currentRole = users[u]?.role || 'user';
+
+  document.getElementById('loginPage').classList.remove('active');
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('appPage').classList.add('active');
+  document.getElementById('appPage').style.display='block';
+
+  document.getElementById('navUser').textContent  = u;
+  const badge = document.getElementById('roleBadge');
+  badge.textContent = currentRole;
+  badge.className   = `nav-badge ${currentRole}`;
+
+  if (currentRole==='admin') {
+    document.getElementById('navAdmin').style.display='block';
+  }
+
+  applyRulesHints();
+  switchTab('links');
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabLinks').style.display = tab==='links' ? 'block' : 'none';
+  document.getElementById('tabAdmin').style.display = tab==='admin' ? 'block' : 'none';
+  document.getElementById('navLinks').classList.toggle('active', tab==='links');
+  document.getElementById('navAdmin').classList.toggle('active', tab==='admin');
+
+  if (tab==='links') { render(); applyRulesHints(); }
+  if (tab==='admin') { renderAdmin(); loadRulesUI(); }
+}
+
+// ══════════════════════════════════════════
+// RULES
+// ══════════════════════════════════════════
+function saveRules(showMsg=false) {
+  const r = {
+    maxClicks:    document.getElementById('ruleMaxClicks').checked,
+    maxClicksVal: document.getElementById('ruleMaxClicksVal').value,
+    maxExpiry:    document.getElementById('ruleMaxExpiry').checked,
+    maxExpiryVal: document.getElementById('ruleMaxExpiryVal').value,
+    warnClicks:   document.getElementById('ruleWarnClicks').checked,
+    requireHttps: document.getElementById('ruleRequireHttps').checked,
+    disableNew:   document.getElementById('ruleDisableNew').checked,
+    autoDisable:  document.getElementById('ruleAutoDisable').checked,
+  };
+  db.saveRulesRaw(r);
+  if (showMsg) {
+    const el = document.getElementById('rulesSaved');
+    el.style.display='inline';
+    setTimeout(()=>{ el.style.display='none'; },2500);
+  }
+  applyRulesHints();
+}
+
+function loadRulesUI() {
+  const r = db.rules();
+  document.getElementById('ruleMaxClicks').checked    = !!r.maxClicks;
+  document.getElementById('ruleMaxClicksVal').value   = r.maxClicksVal || '';
+  document.getElementById('ruleMaxExpiry').checked    = !!r.maxExpiry;
+  document.getElementById('ruleMaxExpiryVal').value   = r.maxExpiryVal || '';
+  document.getElementById('ruleWarnClicks').checked   = !!r.warnClicks;
+  document.getElementById('ruleRequireHttps').checked = !!r.requireHttps;
+  document.getElementById('ruleDisableNew').checked   = !!r.disableNew;
+  document.getElementById('ruleAutoDisable').checked  = !!r.autoDisable;
+}
+
+function applyRulesHints() {
+  const r = db.rules();
+  const bar  = document.getElementById('rulesBar');
+  const tags = document.getElementById('rulesBarTags');
+  const active = [];
+
+  if (r.maxClicks && r.maxClicksVal)  active.push(`Max ${r.maxClicksVal} clicks`);
+  if (r.maxExpiry && r.maxExpiryVal)  active.push(`Max ${r.maxExpiryVal} days`);
+  if (r.warnClicks)                   active.push('Click warnings');
+  if (r.requireHttps)                 active.push('HTTPS only');
+  if (r.disableNew)                   active.push('New links frozen');
+  if (r.autoDisable)                  active.push('Auto-disable');
+
+  if (active.length) {
+    tags.innerHTML = active.map(a=>`<span class="rab-tag">${a}</span>`).join('');
+    bar.classList.add('show');
+  } else {
+    bar.classList.remove('show');
+  }
+
+  // Limit hint
+  const hint = document.getElementById('limitErr');
+  if (r.maxClicks && r.maxClicksVal) {
+    hint.textContent = `↳ Platform max: ${r.maxClicksVal} clicks`;
+    hint.style.display = 'block';
+    hint.style.color = 'var(--ink-muted)';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════
+// CREATE LINK
+// ══════════════════════════════════════════
+function createLink() {
+  const raw      = document.getElementById('newUrl').value.trim();
+  const alias    = document.getElementById('newAlias').value.trim().replace(/\s+/g,'-');
+  const limitVal = document.getElementById('newLimit').value.trim();
+  const expVal   = document.getElementById('newExpiry').value.trim();
+
+  const urlErrEl   = document.getElementById('urlErr');
+  const aliasErrEl = document.getElementById('aliasErr');
+  urlErrEl.style.display='none'; aliasErrEl.style.display='none';
+  document.getElementById('resultBox').style.display='none';
+
+  const rules = db.rules();
+
+  if (rules.disableNew) {
+    urlErrEl.textContent='↳ An admin has frozen new link creation.';
+    urlErrEl.style.display='block'; return;
+  }
+  if (!raw||!isValidUrl(raw)) { urlErrEl.textContent='↳ Please enter a valid URL (must begin with https://)'; urlErrEl.style.display='block'; return; }
+  if (rules.requireHttps && !isHttps(raw)) {
+    urlErrEl.textContent='↳ Platform rules require HTTPS destination URLs.';
+    urlErrEl.style.display='block'; return;
+  }
+
+  const links = db.links(currentUser);
+  let code = alias || null;
+
+  if (code) {
+    const users = db.users();
+    for (const u of Object.keys(users)) {
+      if (db.links(u).find(l=>l.code===code)) {
+        aliasErrEl.style.display='block'; return;
+      }
+    }
+  } else {
+    do { code=genCode(); } while (db.links(currentUser).find(l=>l.code===code));
+  }
+
+  // Enforce global max clicks rule on per-link limit
+  let limit = limitVal ? parseInt(limitVal) : null;
+  if (rules.maxClicks && rules.maxClicksVal) {
+    const platformMax = parseInt(rules.maxClicksVal);
+    if (!limit || limit > platformMax) limit = platformMax;
+  }
+
+  links.unshift({
+    code,
+    original:    raw,
+    clicks:      0,
+    limit,
+    expiryDays:  expVal ? parseInt(expVal) : null,
+    enabled:     true,
+    created:     new Date().toISOString(),
+    lastAccessed: null,
+  });
+  db.saveLinks(currentUser, links);
+
+  const rl = document.getElementById('resultLink');
+  rl.textContent = buildShort(code); rl.href = buildShort(code);
+  const cb = document.getElementById('copyBtn');
+  cb.textContent='Copy'; cb.classList.remove('copied');
+  document.getElementById('resultBox').style.display='flex';
+  document.getElementById('newUrl').value='';
+  document.getElementById('newAlias').value='';
+  document.getElementById('newLimit').value='';
+  document.getElementById('newExpiry').value='';
+  render();
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(document.getElementById('resultLink').textContent).then(()=>{
+    const b=document.getElementById('copyBtn');
+    b.textContent='✓ Copied'; b.classList.add('copied');
+    setTimeout(()=>{b.textContent='Copy';b.classList.remove('copied');},2000);
+  });
+}
+
+// ══════════════════════════════════════════
+// LINK ACTIONS
+// ══════════════════════════════════════════
+function toggleStatus(code, owner=null) {
+  const u = owner||currentUser;
+  const links=db.links(u);
+  const e=links.find(l=>l.code===code);
+  if(e){e.enabled=!e.enabled; db.saveLinks(u,links); render(); if(owner) renderAdmin();}
+}
+
+function deleteLink(code, owner=null) {
+  if(!confirm('Delete this link permanently?')) return;
+  const u = owner||currentUser;
+  db.saveLinks(u, db.links(u).filter(l=>l.code!==code));
+  render(); if(owner) renderAdmin();
+}
+
+let editingCode = null;
+let editingOwner = null;
+
+function openEdit(code, owner=null) {
+  editingCode  = code;
+  editingOwner = owner||currentUser;
+  const e = db.links(editingOwner).find(l=>l.code===code);
+  document.getElementById('editUrl').value = e ? e.original : '';
+  document.getElementById('editErr').style.display='none';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function saveEdit() {
+  const nUrl=document.getElementById('editUrl').value.trim();
+  const err=document.getElementById('editErr');
+  err.style.display='none';
+  if(!nUrl||!isValidUrl(nUrl)){err.style.display='block';return;}
+  const rules=db.rules();
+  if(rules.requireHttps&&!isHttps(nUrl)){err.textContent='↳ Platform requires HTTPS destinations.';err.style.display='block';return;}
+  const links=db.links(editingOwner);
+  const e=links.find(l=>l.code===editingCode);
+  if(e){e.original=nUrl;db.saveLinks(editingOwner,links);}
+  closeModal('editModal');
+  render(); renderAdmin();
+}
+
+document.getElementById('editModal').addEventListener('click',function(e){if(e.target===this)closeModal('editModal');});
+
+// ══════════════════════════════════════════
+// RENDER — USER DASHBOARD
+// ══════════════════════════════════════════
+function render() {
+  if (!currentUser) return;
+  const links = db.links(currentUser);
+  const tbody = document.getElementById('tableBody');
+  document.getElementById('linkCount').textContent = `— ${links.length} entr${links.length!==1?'ies':'y'}`;
+  document.getElementById('emptyState').style.display = links.length ? 'none' : 'block';
+
+  tbody.innerHTML = links.map(l => {
+    const st = getLinkStatus(l);
+    const short = buildShort(l.code);
+
+    let clickCell;
+    if (l.limit) {
+      const pct = l.clicks / l.limit;
+      const cls = st==='expired' ? 'pill-expired' : (pct>=0.8 ? 'pill-warn' : 'pill-clicks');
+      clickCell = `<span class="pill ${cls}"><span class="pip"></span>${l.clicks} / ${l.limit}</span>`;
+    } else {
+      clickCell = `<span class="pill pill-clicks"><span class="pip"></span>${l.clicks}</span>`;
+    }
+
+    const limitInfo = l.limit ? `${l.limit} clicks` : '—';
+    const expiryInfo = l.expiryDays ? `${l.expiryDays}d` : '—';
+    const limitCol = `<span style="font-size:.62rem;color:var(--ink-muted);">${limitInfo} / ${expiryInfo}</span>`;
+
+    const rowCls = st==='inactive' ? 'row-disabled' : (st==='expired' ? 'row-expired' : '');
+
+    return `<tr class="${rowCls}">
+      <td class="tc-url" title="${l.original}">${trunc(l.original,38)}</td>
+      <td class="tc-short"><a href="${short}" target="_blank">brief/${l.code}</a></td>
+      <td>${clickCell}</td>
+      <td><button class="status-btn ${st==='active'?'active':'inactive'}" onclick="toggleStatus('${l.code}')">${st==='active'?'● Active':'○ '+st.charAt(0).toUpperCase()+st.slice(1)}</button></td>
+      <td>${limitCol}</td>
+      <td class="tc-date">${fmtDate(l.created)}</td>
+      <td class="tc-date">${fmtDT(l.lastAccessed)}</td>
+      <td class="tc-actions">
+        <button class="btn-edit" onclick="openEdit('${l.code}')">✎ Edit</button>
+        <button class="btn-danger" onclick="deleteLink('${l.code}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// RENDER — ADMIN PANEL
+// ══════════════════════════════════════════
+function renderAdmin() {
+  if (currentRole!=='admin') return;
+  const users = db.users();
+  const userList = Object.keys(users);
+
+  let totalLinks=0, totalClicks=0, activeLinks=0;
+  const allLinks = [];
+
+  for (const u of userList) {
+    const ul = db.links(u);
+    totalLinks += ul.length;
+    ul.forEach(l => {
+      totalClicks += l.clicks;
+      if (getLinkStatus(l)==='active') activeLinks++;
+      allLinks.push({...l, owner:u});
+    });
+  }
+
+  document.getElementById('statUsers').textContent  = userList.length;
+  document.getElementById('statLinks').textContent  = totalLinks;
+  document.getElementById('statClicks').textContent = totalClicks;
+  document.getElementById('statActive').textContent = activeLinks;
+  document.getElementById('adminUserCount').textContent = `— ${userList.length} users`;
+  document.getElementById('adminLinkCount').textContent = `— ${totalLinks} links`;
+
+  // Users table
+  document.getElementById('adminUserEmpty').style.display = userList.length ? 'none' : 'block';
+  document.getElementById('adminUserTable').innerHTML = userList.map(u => {
+    const ul = db.links(u);
+    const clicks = ul.reduce((a,l)=>a+l.clicks,0);
+    const r = users[u].role||'user';
+    return `<tr>
+      <td style="font-weight:500">${u}</td>
+      <td><span class="nav-badge ${r}" style="font-size:.58rem">${r}</span></td>
+      <td>${ul.length}</td>
+      <td>${clicks}</td>
+      <td class="tc-date">${fmtDate(users[u].created)}</td>
+      <td><button class="btn-danger" onclick="deleteUser('${u}')">Remove</button></td>
+    </tr>`;
+  }).join('');
+
+  // Links table
+  document.getElementById('adminLinkEmpty').style.display = allLinks.length ? 'none' : 'block';
+  document.getElementById('adminLinkTable').innerHTML = allLinks.map(l => {
+    const st = getLinkStatus(l);
+    const short = buildShort(l.code);
+    return `<tr class="${st==='inactive'?'row-disabled':st==='expired'?'row-expired':''}">
+      <td style="font-size:.66rem;color:var(--ink-muted)">${l.owner}</td>
+      <td class="tc-url" title="${l.original}">${trunc(l.original,34)}</td>
+      <td class="tc-short"><a href="${short}" target="_blank">brief/${l.code}</a></td>
+      <td><span class="pill pill-clicks"><span class="pip"></span>${l.clicks}</span></td>
+      <td><button class="status-btn ${st==='active'?'active':'inactive'}" onclick="toggleStatus('${l.code}','${l.owner}')">${st==='active'?'● Active':'○ '+st.charAt(0).toUpperCase()+st.slice(1)}</button></td>
+      <td class="tc-actions">
+        <button class="btn-edit" onclick="openEdit('${l.code}','${l.owner}')">✎</button>
+        <button class="btn-danger" onclick="deleteLink('${l.code}','${l.owner}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteUser(u) {
+  if (u===currentUser) { alert("You can't delete your own account."); return; }
+  if (!confirm(`Delete user "${u}" and all their links?`)) return;
+  const users = db.users();
+  delete users[u];
+  db.saveUsers(users);
+  localStorage.removeItem(SK.links(u));
+  renderAdmin();
+}
+
+// ══════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key!=='Enter') return;
+  if (document.getElementById('loginPage').classList.contains('active')) {
+    const registerVisible = document.getElementById('registerForm').style.display !== 'none';
+    if (registerVisible) doRegister();
+    else doLogin();
+  } else if (document.getElementById('appPage').classList.contains('active') && currentTab==='links') {
+    createLink();
+  }
+});
+
+// ══════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════
+(function boot() {
+  if (document.getElementById('redirPage').classList.contains('active')) return;
+  const u = db.session();
+  if (u) { const users=db.users(); if(users[u]){initApp(u);return;} }
+  document.getElementById('loginPage').classList.add('active');
+  document.getElementById('loginPage').style.display='flex';
+})();
+</script>
+</body>
+</html>
